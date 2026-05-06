@@ -3,11 +3,10 @@ package org.example;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserService {
@@ -25,12 +24,10 @@ public class UserService {
         this.accountService = accountService;
     }
 
-
     public void createUser(String login) {
-
         try (Session checkSession = sessionFactory.openSession()) {
-            Long count = checkSession.createNativeQuery(
-                            "SELECT COUNT(*) FROM users WHERE login = :login", Long.class)
+            Long count = checkSession.createQuery(
+                            "SELECT COUNT(u) FROM User u WHERE u.login = :login", Long.class)
                     .setParameter("login", login)
                     .getSingleResult();
 
@@ -40,11 +37,11 @@ public class UserService {
             }
         }
 
-
         transactionHelper.executeInTransaction(session -> {
             User user = new User(login);
             session.persist(user);
             session.flush();
+
 
             accountService.createAccountForUser(session, user.getId());
 
@@ -52,7 +49,6 @@ public class UserService {
             return user;
         });
     }
-
 
     public void showAllUsers() {
         try (Session session = sessionFactory.openSession()) {
@@ -69,18 +65,4 @@ public class UserService {
         }
     }
 
-
-    public Optional<User> findUserById(int userId) {
-        try (Session session = sessionFactory.openSession()) {
-            User user = session.get(User.class, userId);
-            return Optional.ofNullable(user);
-        }
-    }
-
-    // Проверка существования (boolean)
-    public boolean userExists(int userId) {
-        try (Session session = sessionFactory.openSession()) {
-            return session.get(User.class, userId) != null;
-        }
-    }
 }

@@ -1,7 +1,7 @@
 package org.example;
 
-
 import jakarta.persistence.*;
+import java.math.BigDecimal;
 
 @Entity
 @Table(name="accounts")
@@ -14,13 +14,17 @@ public class Account {
     @ManyToOne
     @JoinColumn(name="userId")
     private User user;
-    private float moneyAmount;
 
-    public Account(float moneyAmount, User user) {
+    @Column(name="moneyAmount")
+    private BigDecimal moneyAmount;
+
+    public Account(BigDecimal moneyAmount, User user) {
         this.moneyAmount = moneyAmount;
+        this.user = user;
     }
 
     public Account() {
+        this.moneyAmount = BigDecimal.ZERO;
     }
 
     public int getId() {
@@ -31,11 +35,11 @@ public class Account {
         this.id = id;
     }
 
-    public float getMoneyAmount() {
+    public BigDecimal getMoneyAmount() {
         return moneyAmount;
     }
 
-    public void setMoneyAmount(float moneyAmount) {
+    public void setMoneyAmount(BigDecimal moneyAmount) {
         this.moneyAmount = moneyAmount;
     }
 

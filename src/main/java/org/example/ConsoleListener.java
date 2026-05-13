@@ -4,6 +4,8 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
 import java.util.Scanner;
 
 @Component
@@ -40,19 +42,19 @@ public class ConsoleListener {
             try {
                 return Integer.parseInt(input);
             } catch (NumberFormatException e) {
-                System.out.println("Error: Enter a number. You enter: " + input);
+                System.out.println("Error: Enter a number. You entered: " + input);
             }
         }
     }
 
-    private float readFloat(String prompt) {
+    private BigDecimal readBigDecimal(String prompt) {
         while (true) {
             System.out.println(prompt);
             String input = scanner.nextLine().trim();
             try {
-                return Float.parseFloat(input);
+                return new BigDecimal(input);
             } catch (NumberFormatException e) {
-                System.out.println("Error: Enter a number. You enter: " + input);
+                System.out.println("Error: Enter a valid number. You entered: " + input);
             }
         }
     }
@@ -114,7 +116,7 @@ public class ConsoleListener {
     private void createAccount() {
         int userId = readInt("Enter user id:");
         try {
-            Account account = accountService.createNewAccount(userId);
+            Account account = accountService.createAccountForUser(userId);
             System.out.println("Account created: " + account);
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
@@ -123,7 +125,7 @@ public class ConsoleListener {
 
     private void deposit() {
         int id = readInt("Enter account id:");
-        float amount = readFloat("Enter amount:");
+        BigDecimal amount = readBigDecimal("Enter amount:");
         try {
             accountService.accountDeposit(id, amount);
         } catch (IllegalArgumentException e) {
@@ -133,7 +135,7 @@ public class ConsoleListener {
 
     private void withdraw() {
         int id = readInt("Enter account id:");
-        float amount = readFloat("Enter amount:");
+        BigDecimal amount = readBigDecimal("Enter amount:");
         try {
             accountService.accountWithDraw(id, amount);
         } catch (IllegalArgumentException e) {
@@ -144,7 +146,7 @@ public class ConsoleListener {
     private void transfer() {
         int sourceId = readInt("Enter source account id:");
         int targetId = readInt("Enter target account id:");
-        float amount = readFloat("Enter amount:");
+        BigDecimal amount = readBigDecimal("Enter amount:");
         try {
             accountService.accountTransfer(sourceId, targetId, amount);
             System.out.println("Transfer completed");

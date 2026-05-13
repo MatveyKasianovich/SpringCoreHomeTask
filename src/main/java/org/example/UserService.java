@@ -1,54 +1,68 @@
 package org.example;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
+import org.springframework.stereotype.Service;
 
-@Component
+import java.util.List;
+import java.util.Optional;
+
+@Service
 public class UserService {
 
+    private final SessionFactory sessionFactory;
+    private final TransactionHelper transactionHelper;
     private final AccountService accountService;
-    private final AtomicInteger userIdGenerator = new AtomicInteger(1);
-    private final Map<Integer, User> userMap = new HashMap<>();
 
     @Autowired
-    public UserService(AccountService accountService) {
+    public UserService(SessionFactory sessionFactory,
+                       TransactionHelper transactionHelper,
+                       AccountService accountService) {
+        this.sessionFactory = sessionFactory;
+        this.transactionHelper = transactionHelper;
         this.accountService = accountService;
     }
 
     public void createUser(String login) {
-        boolean exists = userMap.values().stream()
-                .anyMatch(user -> login.equals(user.getLogin()));
+        try (Session checkSession = sessionFactory.openSession()) {
+            Long count = checkSession.createQuery(
+                            "SELECT COUNT(u) FROM User u WHERE u.login = :login", Long.class)
+                    .setParameter("login", login)
+                    .getSingleResult();
 
-        if (!exists) {
-            int newId = userIdGenerator.getAndIncrement();
-            User newUser = new User(newId, login);
-            newUser.setAccountList(new ArrayList<>());
-
-            userMap.put(newUser.getId(), newUser);
-
-            accountService.createNewAccount(newUser.getId());
-
-
-            System.out.println("User created: " + newUser);
-        } else {
-            throw new IllegalArgumentException(String.format("User with login '%s' already exists", login));
+            if (count > 0) {
+                throw new IllegalArgumentException(
+                        String.format("User with login '%s' already exists", login));
+            }
         }
+
+        transactionHelper.executeInTransaction(session -> {
+            User user = new User(login);
+            session.persist(user);
+            session.flush();
+
+
+            accountService.createAccountForUser(session, user.getId());
+
+            System.out.println("User created: " + user);
+            return user;
+        });
     }
 
     public void showAllUsers() {
-        if (userMap.isEmpty()) {
-            System.out.println("No users in the system");
-            return;
-        }
-        userMap.values().forEach(System.out::println);
-    }
+        try (Session session = sessionFactory.openSession()) {
+            List<User> users = session.createQuery(
+                            "SELECT DISTINCT u FROM User u LEFT JOIN FETCH u.accountList",
+                            User.class)
+                    .getResultList();
 
-    public User userExists(int userId) {
-        return userMap.get(userId);
+            if (users.isEmpty()) {
+                System.out.println("No users in the system");
+            } else {
+                users.forEach(System.out::println);
+            }
+        }
     }
 
 }

@@ -1,15 +1,30 @@
 package org.example;
 
+import jakarta.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name="accounts")
 public class Account {
-
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name="id")
     private int id;
-    private int userId;
-    private float moneyAmount;
 
-    public Account(int id,float moneyAmount, int userId) {
-        this.id = id;
+    @ManyToOne
+    @JoinColumn(name="userId")
+    private User user;
+
+    @Column(name="moneyAmount")
+    private BigDecimal moneyAmount;
+
+    public Account(BigDecimal moneyAmount, User user) {
         this.moneyAmount = moneyAmount;
-        this.userId = userId;
+        this.user = user;
+    }
+
+    public Account() {
+        this.moneyAmount = BigDecimal.ZERO;
     }
 
     public int getId() {
@@ -20,27 +35,26 @@ public class Account {
         this.id = id;
     }
 
-    public float getMoneyAmount() {
+    public BigDecimal getMoneyAmount() {
         return moneyAmount;
     }
 
-    public void setMoneyAmount(float moneyAmount) {
+    public void setMoneyAmount(BigDecimal moneyAmount) {
         this.moneyAmount = moneyAmount;
     }
 
-    public int getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public void setUserId(int userId) {
-        this.userId = userId;
+    public void setUser(User user) {
+        this.user = user;
     }
 
     @Override
     public String toString() {
         return "Account{" +
                 "id=" + id +
-                ", userId=" + userId +
                 ", moneyAmount=" + moneyAmount +
                 '}';
     }
